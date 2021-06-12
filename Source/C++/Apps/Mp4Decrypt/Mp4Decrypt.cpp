@@ -31,6 +31,8 @@
 +---------------------------------------------------------------------*/
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
+#include <termcap.h>
 
 #include "Ap4.h"
 
@@ -79,7 +81,31 @@ public:
 AP4_Result
 ProgressListener::OnProgress(unsigned int step, unsigned int total)
 {
-    fprintf(stdout, "\r%d/%d", step, total);
+    static char termbuf[2048];
+    char *termtype = getenv("TERM");
+    unsigned int ndigits = floor(log10(abs((int)total))) + 1;
+    unsigned int margin = 2*ndigits + 9;
+    unsigned int width;
+    if (tgetent(termbuf, termtype) < 0) {
+        width = 80;
+    } else {
+        width = tgetnum("co");
+    }
+    width = width - margin;
+    if (step == 0) {
+        fprintf(stdout, "\e[?25l"); // hide cursor
+    }
+    fprintf(stdout, "\r %3.0f%%|", ((float)step/total)*100);
+    for (unsigned int i = 0; i <= ((float)step/total)*width; i++) {
+        fprintf(stdout, "\xe2\x96\x88"); // progress bar
+    }
+    for (unsigned int i = (((float)step/total)*width)+1; i <= width; i++) {
+        fprintf(stdout, " ");
+    }
+    fprintf(stdout, "|%*d/%d", ndigits, step, total);
+    if (step == total) {
+        fprintf(stdout, "\e[?25h\n"); // show cursor
+    }
     fflush(stdout);
     return AP4_SUCCESS;
 }

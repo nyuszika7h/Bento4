@@ -149,6 +149,10 @@ AP4_Processor::ProcessFragments(AP4_MoovAtom*              moov,
 {
     unsigned int fragment_index = 0;
     AP4_Array<FragmentMapEntry> fragment_map;
+
+    if (listener) {
+        listener->OnProgress(0, atoms.ItemCount());
+    }
     
     for (AP4_List<AP4_AtomLocator>::Item* item = atoms.FirstItem();
                                           item;
@@ -443,6 +447,10 @@ AP4_Processor::Process(AP4_ByteStream&   input,
     AP4_UI64                    stream_offset = 0;
     bool                        in_fragments = false;
     unsigned int                sidx_count = 0;
+    if (listener) {
+        listener->OnProgress(0, 1);
+    }
+
     for (AP4_Atom* atom = NULL;
         AP4_SUCCEEDED(atom_factory.CreateAtomFromStream(input, atom));
         input.Tell(stream_offset)) {
